@@ -19,6 +19,7 @@ from tensorflow.python.framework import ops
 from tensorflow.python.framework.op_def_library import _Flatten, _IsListValue
 from keras.callbacks import TensorBoard
 
+
 # Generate dummy data
 # x_train = np.random.random((100, 100, 100, 3))
 # # x_train = np.zeros(100,100,100,3)
