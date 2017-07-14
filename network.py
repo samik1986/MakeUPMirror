@@ -36,14 +36,9 @@ from keras.callbacks import TensorBoard
 # y_aux_test = keras.utils.to_categorical(
 #     np.random.randint(2, size=(2, 1)), num_classes=2)
 
-x_train = np.load('ae_gxTrain.npy')
-# y_train = np.load('gyTrain.npy')
-x_aux_train = np.load('ae_pxTrain.npy')
-# y_aux_train =np.load('vyTrain.npy')
-
 # print y_train
 
-input_dim =  [100,100,3]
+input_dim =  [150,130,3]
 
 sess = tf.InteractiveSession()
 
@@ -55,7 +50,7 @@ def create_network(input_dim):
     # input_source = Input(input_dim)
     input_target = Input(input_dim)
 
-    #---Autoencoder----
+    #---Encoder----
 
     x = Conv2D(64, (3, 3), activation='relu', padding='same')(input_target)
     x = MaxPooling2D((2, 2), padding='same')(x)
@@ -84,7 +79,7 @@ def create_network(input_dim):
     return final
 
 
-model = create_network([100, 100, 3])
+model = create_network(input_dim)
 print(model.summary())
 plot_model(model, to_file='model.png')
 # SVG(model_to_dot(model).create(prog='dot', format='svg'))
