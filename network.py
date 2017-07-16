@@ -4,7 +4,8 @@ import tensorflow as tf
 import keras.models
 from keras.models import Sequential
 from keras.models import Model
-from keras.layers import Dense, Dropout, Flatten, merge, UpSampling2D, Reshape
+from keras.layers import Dense, Dropout, Flatten, merge, UpSampling2D, Reshape, BatchNormalization
+from keras.layers.merge import add
 from keras.layers import Input, TimeDistributed
 from keras.layers import Conv2D, MaxPooling2D
 from keras.optimizers import SGD
@@ -18,6 +19,8 @@ from scipy.linalg._expm_frechet import vec
 from tensorflow.python.framework import ops
 from tensorflow.python.framework.op_def_library import _Flatten, _IsListValue
 from keras.callbacks import TensorBoard
+from LRN import LRN
+from custom_merge import Discrim
 
 
 # Generate dummy data
@@ -37,67 +40,71 @@ from keras.callbacks import TensorBoard
 #     np.random.randint(2, size=(2, 1)), num_classes=2)
 
 # print y_train
+mu_ip = np.load('MU_IP.npy')
+nm_ip = np.load('NM_IP.npy')
+mu_op = np.load('MU_OP.npy')
 
-input_dim =  [150,130,3]
+input_dim =  [100,100,3]
 
 sess = tf.InteractiveSession()
 
-def hellinger_distance(y_true,y_pred):
-    y_true = K.clip()
-
 def create_network(input_dim):
 
-    # input_source = Input(input_dim)
-    input_target = Input(input_dim)
+    #---Inputs--------
+    input_mu = Input(input_dim)
+    input_nm = Input(input_dim)
 
-    #---Encoder----
+    #---Make-up Path----
 
-    x = Conv2D(64, (3, 3), activation='relu', padding='same')(input_target)
-    x = MaxPooling2D((2, 2), padding='same')(x)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
-    x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
-    x = MaxPooling2D((2, 2), padding='same')(x)
-    x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
-    encoded = MaxPooling2D((2, 2), padding='same')(x)
+    x = Conv2D(64, (3, 3), activation='relu', padding='same')(input_mu)
+    x = BatchNormalization()(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+    x = Conv2D(128, (3, 3), activation='relu', padding='same')(x)
+    x = Dropout(0.5)(x)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same')(x)
+    x = Conv2D(256, (3, 3), activation='relu', padding='same')(x)
+    x = Dropout(0.5)(x)
+    x = Conv2D(512, (3, 3), activation='relu', padding='same')(x)
+    # x = LRN()(x)
+    x_end = BatchNormalization()(x)
+    print x_end
 
-    # print encoded
-    x = UpSampling2D((2, 2))(encoded)
-    x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
-    x = UpSampling2D((2, 2))(x)
-    x = Conv2D(32, (3, 3), activation='relu', padding='same')(x)
-    x = Conv2D(64, (3, 3), activation='relu', padding='same')(x)
-    x = UpSampling2D((2, 2))(x)
-    x = Conv2D(64, (3, 3), activation='relu')(x)
-    decoded = Conv2D(3, (3, 3), activation='sigmoid')(x)
-    # print K.int_shape(decoded)
-    # print input_source
+    #---No Make-up Path------------
 
+    y = Conv2D(64, (3, 3), activation='relu', padding='same')(input_nm)
+    y = Conv2D(128, (3, 3), activation='relu', padding='same')(y)
+    y = Conv2D(256, (3, 3), activation='relu', padding='same')(y)
+    y_end = Conv2D(512, (3, 3), activation='relu', padding='same')(y)
 
-    final = Model(inputs=input_target,
-                  outputs=decoded)
+    print y_end
+
+    #---Common Path----------
+
+    comb = Discrim()([x_end,y_end])
+    print comb
+    temp = Conv2D(3, (3, 3), activation='relu', padding='same')(comb)
+
+    print temp
+
+    final = Model(inputs=[input_mu, input_nm],
+                  outputs=temp)
 
     return final
 
 
 model = create_network(input_dim)
-print(model.summary())
-plot_model(model, to_file='model.png')
-# SVG(model_to_dot(model).create(prog='dot', format='svg'))
-# tbCallBack = keras.callbacks.TensorBoard(log_dir='Graph', histogram_freq=0,
-#           write_graph=True, write_images=True)
-#
-# tbCallBack.set_model(model)
-#
-# keras.callbacks.TensorBoard(sess)
+# print(model.summary())
+# plot_model(model, to_file='model.png')
+
 
 sgd = SGD(lr=0.001, decay=1e-6, momentum=0.7, nesterov=True)
 
 model.compile(loss='binary_crossentropy',
               optimizer='adadelta')
 
-model.fit(x_aux_train,
-          x_train,
-          batch_size=150, epochs=5,
+model.fit([mu_ip,nm_ip],
+          mu_op,
+          batch_size=10, epochs=5,
           callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
 
 # score = model.evaluate([x_test, x1_test],
