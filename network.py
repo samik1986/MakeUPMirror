@@ -18,7 +18,7 @@ from tensorflow.python.ops import array_ops
 from scipy.linalg._expm_frechet import vec
 from tensorflow.python.framework import ops
 from tensorflow.python.framework.op_def_library import _Flatten, _IsListValue
-from keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard, ModelCheckpoint
 from LRN import LRN
 from custom_merge import Discrim
 
@@ -46,7 +46,7 @@ mu_op = np.load('MU_OP.npy')
 
 input_dim =  [100,100,3]
 
-sess = tf.InteractiveSession()
+# sess = tf.InteractiveSession()
 
 def create_network(input_dim):
 
@@ -84,19 +84,20 @@ def create_network(input_dim):
     print comb
 
     z = Conv2D(512, (3, 3), activation='relu', padding='same')(comb)
-    z = Flatten()(z)
-    z = Dense(512*100*100,activation='relu')(z)
-    z = Dense(4096, activation='relu')(z)
+    # z = Flatten()(z)
+    # z = Dense(512*100*100,activation='relu')(z)
+    # z = Dense(4096, activation='relu')(z)
     z = Dropout(0.5)(z)
-    z = Dense(4096,activation='relu')(z)
-    z = Dense(512*100*100, activation='relu')(z)
-    z = Reshape((100,100,512))(z)
+    # z = Dense(4096,activation='relu')(z)
+    # z = Dense(512*100*100, activation='relu')(z)
+    # z = Reshape((100,100,512))(z)
+    z = Conv2D(512, (3, 3), activation='relu', padding='same')(z)
     z = Conv2D(256, (3, 3), activation='relu', padding='same')(z)
     z = Conv2D(128, (3, 3), activation='relu', padding='same')(z)
     z = Conv2D(64, (3, 3), activation='relu', padding='same')(z)
     z = Conv2D(32, (3, 3), activation='relu', padding='same')(z)
 
-    op = Conv2D(3, (3, 3), activation='relu', padding='same')(z)
+    op = Conv2D(3, (3, 3), activation='sigmoid', padding='same')(z)
 
     print op
 
@@ -107,19 +108,24 @@ def create_network(input_dim):
 
 
 model = create_network(input_dim)
-# print(model.summary())
+print(model.summary())
 # plot_model(model, to_file='model.png')
 
 
-sgd = SGD(lr=0.001, decay=1e-6, momentum=0.7, nesterov=True)
-
+# sgd = SGD(lr=0.001, decay=1e-6, momentum=0.7, nesterov=True)
+adadelta = keras.optimizers.adadelta(lr=0.001,decay=1e-5)
 model.compile(loss='binary_crossentropy',
               optimizer='adadelta')
+filepath="models/ckpt{epoch:02d}.hdf5"
+checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
+
 
 model.fit([mu_ip,nm_ip],
           mu_op,
-          batch_size=10, epochs=5,
-          callbacks=[TensorBoard(log_dir='/tmp/autoencoder')])
+          batch_size=20, epochs=1000,
+          callbacks=[TensorBoard(log_dir='models/'),checkpoint])
+
+
 
 # score = model.evaluate([x_test, x1_test],
 #                        [y_test, y_aux_test],
