@@ -7,7 +7,7 @@ from keras.models import Model
 from keras.layers import Dense, Dropout, Flatten, merge, UpSampling2D, Reshape, BatchNormalization
 from keras.layers.merge import add
 from keras.layers import Input, TimeDistributed
-from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Conv2D, MaxPooling2D,concatenate
 from keras.optimizers import SGD
 from keras.utils import plot_model
 from IPython.display import SVG
@@ -80,14 +80,28 @@ def create_network(input_dim):
 
     #---Common Path----------
 
-    comb = Discrim()([x_end,y_end])
+    comb = concatenate([x_end,y_end],axis=-1)
     print comb
-    temp = Conv2D(3, (3, 3), activation='relu', padding='same')(comb)
 
-    print temp
+    z = Conv2D(512, (3, 3), activation='relu', padding='same')(comb)
+    z = Flatten()(z)
+    z = Dense(512*100*100,activation='relu')(z)
+    z = Dense(4096, activation='relu')(z)
+    z = Dropout(0.5)(z)
+    z = Dense(4096,activation='relu')(z)
+    z = Dense(512*100*100, activation='relu')(z)
+    z = Reshape((100,100,512))(z)
+    z = Conv2D(256, (3, 3), activation='relu', padding='same')(z)
+    z = Conv2D(128, (3, 3), activation='relu', padding='same')(z)
+    z = Conv2D(64, (3, 3), activation='relu', padding='same')(z)
+    z = Conv2D(32, (3, 3), activation='relu', padding='same')(z)
+
+    op = Conv2D(3, (3, 3), activation='relu', padding='same')(z)
+
+    print op
 
     final = Model(inputs=[input_mu, input_nm],
-                  outputs=temp)
+                  outputs=op)
 
     return final
 

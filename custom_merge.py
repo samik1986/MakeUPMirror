@@ -225,9 +225,24 @@ class Discrim(_custom_merge):
     """
 
     def find_discriminative(self, input1, input2):
-        print range(K.int_shape(input2)[3])
-        for i in range(0,K.int_shape(input1)[3]):
-            output += inputs
+        # for i1 in range(K.int_shape(input2)[3]):
+        #     for i2 in range(K.int_shape(input1)[3]):
+        #         ip1 = input1[:,:,:,i2]
+        #         ip1 = tf.expand_dims(ip1,3)
+        #         ip2 = input2[:,:,:,i1]
+        #         ip2 = tf.expand_dims(ip2, 3)
+        #         patch1 = tf.extract_image_patches(ip2,[1,11,11,1],[1,6,6,1],[1,1,1,1],padding='SAME')
+        #         print patch1
+        #         for j1 in range(K.int_shape(patch1)[1]):
+        #             for j2 in range(K.int_shape(patch1)[2]):
+        #                 p1 =patch1[:,j1,j2,:]
+        #                 p1 = Reshape((11,11))(p1)
+        #                 input1[:,:,:,i2] = Conv2D(1,p1,strides=[3,3],padding='SAME')(ip1)
+
+        mean1 = K.mean(K.mean(K.mean(input1,3,False),2,False),1,False)
+        print mean1, '.....'
+        output = input1
+        print output
         return output
 
     def _merge_function(self, inputs):
