@@ -127,9 +127,9 @@ model.fit([mu_ip,nm_ip],
 
 
 
-# score = model.evaluate([x_test, x1_test],
-#                        [y_test, y_aux_test],
-#                        batch_size=20)
+score = model.evaluate([mu_ip, nm_ip],
+                       mu_op,
+                       batch_size=20)
 
 
 # print score
