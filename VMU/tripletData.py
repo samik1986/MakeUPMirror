@@ -22,6 +22,7 @@ nm = np.load('VMU/VMU_NM_S.npy')
 # np.save('YMU_NM_S1.npy',nm_s1)
 # np.save('YMU_NM_S2.npy',nm_s2)
 
+
 for i in range(np.size(nm,0)):
     for j in range(np.size(mu_fm,0)):
         tempMu = mu_fm[j,:,:,:]
