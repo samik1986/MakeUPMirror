@@ -40,9 +40,13 @@ from custom_merge import Discrim
 #     np.random.randint(2, size=(2, 1)), num_classes=2)
 
 # print y_train
-mu_ip = np.load('MU_IP.npy')
-nm_ip = np.load('NM_IP.npy')
-mu_op = np.load('MU_OP.npy')
+mu_ip = np.load('VMU/MU_IP_S.npy')
+nm_ip = np.load('VMU/NM_IP_S.npy')
+mu_op = np.load('VMU/MU_OP_S.npy')
+
+mu_ip = mu_ip.astype('float32') / 255.
+nm_ip = nm_ip.astype('float32') / 255.
+mu_op = mu_op.astype('float32') / 255.
 
 input_dim =  [100,100,3]
 
@@ -114,7 +118,7 @@ print(model.summary())
 
 # sgd = SGD(lr=0.001, decay=1e-6, momentum=0.7, nesterov=True)
 adadelta = keras.optimizers.adadelta(lr=0.001,decay=1e-5)
-model.compile(loss='binary_crossentropy',
+model.compile(loss='mse',
               optimizer='adadelta')
 filepath="models/ckpt{epoch:02d}.hdf5"
 checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only=True, mode='min')
@@ -122,14 +126,14 @@ checkpoint = ModelCheckpoint(filepath, monitor='loss', verbose=1, save_best_only
 
 model.fit([mu_ip,nm_ip],
           mu_op,
-          batch_size=20, epochs=1000,
+          batch_size=20, epochs=10000,
           callbacks=[TensorBoard(log_dir='models/'),checkpoint])
 
 
 
-score = model.evaluate([mu_ip, nm_ip],
-                       mu_op,
-                       batch_size=20)
+# score = model.evaluate([mu_ip, nm_ip],
+#                        mu_op,
+#                        batch_size=20)
 
 
 # print score
