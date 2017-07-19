@@ -13,8 +13,8 @@ mu_em = np.load('VMU/VMU_MU_EM.npy')
 mu_ls = np.load('VMU/VMU_MU_LS.npy')
 
 
-nm = np.load('VMU/VMU_NM_S.npy')
-
+# nm = np.load('VMU/VMU_NM_S.npy')
+nm = np.load('VMU/VMU_NM_L.npy')
 
 
 # np.save('YMU_MU_S1.npy',mu_s1)
@@ -51,6 +51,6 @@ for i in range(np.size(nm,0)):
 # mu_op = np.asarray(mu_op)
 
 
-np.save('VMU/MU_IP_S.npy',mu_ip)
-np.save('VMU/MU_OP_S.npy',mu_op)
-np.save('VMU/NM_IP_S.npy',nm_ip)
+np.save('MU_IP_L.npy',mu_ip)
+np.save('MU_OP_L.npy',mu_op)
+np.save('NM_IP_L.npy',nm_ip)
